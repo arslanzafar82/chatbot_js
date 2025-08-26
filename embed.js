@@ -247,14 +247,14 @@
       });
 
       recognition.onresult = (event) => {
-        let interimTranscript = "";
         let finalTranscript = "";
+        let interimTranscript = "";
         for (let i = 0; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript + " ";
+          const result = event.results[i];
+          if (result.isFinal) {
+            finalTranscript += result[0].transcript + " ";
           } else {
-            interimTranscript += transcript;
+            interimTranscript += result[0].transcript;
           }
         }
         textarea.value = finalTranscript + interimTranscript;
