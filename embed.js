@@ -5,7 +5,7 @@
     greet: "👋 Hi! Ask me anything.",
     position: "right",              // "right" | "left"
     zIndex: 999999,
-    accent: "#16a34a",              // launcher + send button + accents
+    accent: "#16a34a",
     headerBg: "#ffffff",
     headerText: "#111827",
     panelBg: "#ffffff",
@@ -33,9 +33,9 @@
     const c = (k) => opts[k];
     return `
       *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif}
-      .cw-wrap{position:fixed;bottom:16px;${opts.position === "left" ? "left" : "right"}:16px;z-index:${opts.zIndex}}
+      .cw-wrap{position:fixed;bottom:16px;${opts.position==="left"?"left":"right"}:16px;z-index:${opts.zIndex}}
       .cw-btn{width:56px;height:56px;border-radius:50%;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(0,0,0,.18);background:${c("accent")};color:#fff;font-weight:800}
-      .cw-panel{position:absolute;bottom:72px;${opts.position === "left" ? "left" : "right"}:0;width:${opts.width}px;height:${opts.height}px;border:1px solid ${c("border")};border-radius:${opts.corner}px;overflow:hidden;background:${c("panelBg")};box-shadow:0 22px 60px rgba(0,0,0,.18);display:none}
+      .cw-panel{position:absolute;bottom:72px;${opts.position==="left"?"left":"right"}:0;width:${opts.width}px;height:${opts.height}px;border:1px solid ${c("border")};border-radius:${opts.corner}px;overflow:hidden;background:${c("panelBg")};box-shadow:0 22px 60px rgba(0,0,0,.18);display:none}
       .cw-open .cw-panel{display:flex;flex-direction:column}
       .cw-header{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 10px;background:${c("headerBg")};color:${c("headerText")};border-bottom:1px solid ${c("border")}}
       .cw-brand{display:flex;align-items:center;gap:10px}
@@ -61,14 +61,19 @@
         border: 0;
         border-radius: 10px;
         padding: 10px 12px;
-        background: #16a34a;  /* gray when idle */
-        
+        background: #16a34a;  /* stays green */
         color: #fff;
         font-weight: 700;
         cursor: pointer;
+        position: relative;
       }
       .cw-mic.recording {
-        background: #6b7280;  /* blue when recording */
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(22,163,74, 0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(22,163,74, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(22,163,74, 0); }
       }
       .cw-typing{display:flex;gap:6px;padding:8px 10px}
       .cw-dot{width:8px;height:8px;border-radius:50%;background:${c("subtext")};animation:cw-b 1.4s infinite both}
@@ -117,7 +122,7 @@
     try { return JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch { return []; }
   }
   function save(storageKey, data) {
-    try { localStorage.setItem(storageKey, JSON.stringify(data.slice(-100))); } catch { }
+    try { localStorage.setItem(storageKey, JSON.stringify(data.slice(-100))); } catch {}
   }
 
   function create(el, attrs, html) {
@@ -139,10 +144,8 @@
     const wrap = create("div", { class: "cw-wrap" });
     const style = create("style"); style.textContent = css(opts);
 
-    // Launcher button
     const btn = create("button", { class: "cw-btn", title: "Chat" }, "💬");
 
-    // Panel & header
     const panel = create("div", { class: "cw-panel" });
     const header = create("div", { class: "cw-header" });
     header.innerHTML = `
@@ -153,7 +156,6 @@
       <button class="cw-close" title="Close">×</button>
     `;
 
-    // Body & input
     const body = create("div", { class: "cw-body" });
     const inputWrap = create("div", { class: "cw-input" });
     inputWrap.innerHTML = `
@@ -169,7 +171,6 @@
     shadow.appendChild(style); shadow.appendChild(wrap);
     document.body.appendChild(host);
 
-    // State
     let messages = load(opts.storageKey);
     if (messages.length === 0 && opts.greet) {
       messages.push({ id: Date.now(), from: "bot", text: opts.greet, time: time() });
@@ -178,18 +179,15 @@
 
     function render() {
       body.innerHTML = "";
-
       const hasUser = messages.some(m => m.from === "user");
       if (!hasUser && opts.greet) {
         const w = create("div", { class: "cw-welcome" }, escapeHtml(opts.greet || "Welcome 👋"));
         body.appendChild(w);
       }
-
       messages.forEach(m => {
         const row = create("div", { class: "cw-row " + (m.from === "user" ? "user" : "bot") });
         const group = create("div", { class: "cw-msgwrap" });
         const av = create("div", { class: "cw-avatar" }, m.from === "user" ? "👤" : "🤖");
-
         const bubble = create("div", { class: "cw-bubble " + (m.from === "user" ? "cw-user" : "cw-bot") });
         if (m.typing) {
           bubble.innerHTML = `<div class="cw-typing"><div class="cw-dot"></div><div class="cw-dot"></div><div class="cw-dot"></div></div>`;
@@ -197,17 +195,14 @@
           const html = `<div>${escapeHtml(m.text)}</div><div class="cw-time">${m.time}</div>`;
           bubble.innerHTML = html;
         }
-
         group.appendChild(av); group.appendChild(bubble);
         row.appendChild(group); body.appendChild(row);
       });
-
       body.scrollTop = body.scrollHeight;
     }
 
     render();
 
-    // Events
     const closeBtn = header.querySelector(".cw-close");
     const textarea = inputWrap.querySelector("textarea");
     const sendBtn = inputWrap.querySelector(".cw-send");
@@ -231,14 +226,13 @@
     });
     sendBtn.addEventListener("click", send);
 
-    // ---- Speech-to-Text Feature ----
+    // ---- Speech-to-Text ----
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition;
-
     if (SpeechRecognition) {
       recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.continuous = true;
+      recognition.interimResults = true;
       recognition.lang = "en-US";
 
       micBtn.addEventListener("click", () => {
@@ -246,28 +240,34 @@
           recognition.stop();
           micBtn.classList.remove("recording");
         } else {
+          textarea.value = "";
           recognition.start();
           micBtn.classList.add("recording");
         }
       });
 
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        textarea.value = transcript;
-        micBtn.classList.remove("recording");
+        let interimTranscript = "";
+        let finalTranscript = "";
+        for (let i = 0; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + " ";
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        textarea.value = finalTranscript + interimTranscript;
       };
 
-      recognition.onerror = (err) => {
-        console.error("Speech recognition error", err);
+      recognition.onerror = () => {
         micBtn.classList.remove("recording");
       };
-
       recognition.onend = () => {
         micBtn.classList.remove("recording");
       };
     } else {
       micBtn.style.display = "none";
-      console.warn("Speech recognition not supported in this browser.");
     }
 
     // ---- Send Function ----
@@ -289,7 +289,6 @@
       try {
         const history = messages.filter(m => !m.typing).map(({ from, text, time }) => ({ from, text: safeString(text), time }));
         const payload = { [opts.messageKey]: text, history };
-
         const h = opts.headers || { "Content-Type": "application/json" };
         const ct = (h["Content-Type"] || h["content-type"] || "application/json").toLowerCase();
         let body;
@@ -301,20 +300,17 @@
         } else {
           body = JSON.stringify(payload);
         }
-
         const res = await fetch(opts.webhookUrl, { method: "POST", headers: h, body });
         const rct = (res.headers.get("content-type") || "").toLowerCase();
         let data;
         try { data = rct.includes("application/json") ? await res.json() : await res.text(); }
         catch { data = await res.text(); }
-
         messages = messages.filter(m => m.id !== tid);
         const reply = extractText(data, opts.parse);
         messages.push({ id: Date.now() + 1, from: "bot", text: reply || "(empty response)", time: time() });
-      } catch (err) {
+      } catch {
         messages = messages.filter(m => m.id !== tid);
         messages.push({ id: Date.now() + 2, from: "bot", text: "Sorry, I couldn't reach the server.", time: time() });
-        console.error("[ChatWidget] send error", err);
       } finally {
         save(opts.storageKey, messages);
         render();
@@ -323,7 +319,6 @@
     }
   }
 
-  // Public API
   window.ChatWidget = {
     init: function (options) {
       const opts = Object.assign({}, DEFAULTS, options || {});
