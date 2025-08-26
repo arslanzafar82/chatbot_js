@@ -1,3 +1,4 @@
+
 (function () {
   const DEFAULTS = {
     webhookUrl: "",                 // <-- REQUIRED: your n8n/Zapier webhook
@@ -58,9 +59,15 @@
       .cw-input{border-top:1px solid ${c("border")};padding:10px;background:#fff}
       .cw-box{display:flex;gap:8px;align-items:flex-end;border:1px solid ${c("border")};border-radius:12px;padding:8px;background:#fff}
       textarea{flex:1;border:0;outline:none;background:transparent;resize:none;min-height:42px;max-height:120px}
-      .cw-send{border:0;border-radius:50%;padding:10px 12px;background:${c("accent")};color:#fff;font-weight:700;cursor:pointer}
-      .cw-mic {border:0;border-radius:50%;padding:10px 12px;background:#16a34a;color:#fff;font-weight:700;cursor:pointer;position:relative}
-      .cw-mic.recording {background:#374151;animation:pulse 1.5s infinite}
+      .cw-send, .cw-mic {
+        display:flex;align-items:center;justify-content:center;
+        border:0;border-radius:50%;
+        width:40px;height:40px;
+        font-size:16px;cursor:pointer;color:#fff;
+      }
+      .cw-send{background:${c("accent")}}
+      .cw-mic{background:#16a34a}
+      .cw-mic.recording{background:#374151;animation:pulse 1.5s infinite}
       @keyframes pulse {
         0% { box-shadow:0 0 0 0 rgba(55,65,81,0.7);}
         70%{ box-shadow:0 0 0 12px rgba(55,65,81,0);}
@@ -74,246 +81,120 @@
     `;
   }
 
+  function safeString(v){try{if(v==null)return"";if(typeof v==="string")return v;if(typeof v==="number"||typeof v==="boolean")return String(v);if(Array.isArray(v))return safeString(v[0]??"");if(typeof v==="object"){if(v.reply||v.message||v.text)return v.reply||v.message||v.text;try{return JSON.stringify(v);}catch{return String(v);}}return String(v);}catch{return""}}
+  function escapeHtml(s){const str=safeString(s);return str.replace(/[&<>]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+  function extractText(payload,parseOpt){try{if(typeof parseOpt==="function"){const out=parseOpt(payload);return safeString(out);}return safeString(payload);}catch{return"Sorry, I couldn’t read that response.";}}
+  function time(){return new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});}
+  function load(storageKey){try{return JSON.parse(localStorage.getItem(storageKey)||"[]");}catch{return[];}}
+  function save(storageKey,data){try{localStorage.setItem(storageKey,JSON.stringify(data.slice(-100)));}catch{}}
+  function create(el,attrs,html){const e=document.createElement(el);if(attrs)Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(html!=null)e.innerHTML=html;return e;}
 
-  function safeString(v) {
-    try {
-      if (v == null) return "";
-      if (typeof v === "string") return v;
-      if (typeof v === "number" || typeof v === "boolean") return String(v);
-      if (Array.isArray(v)) return safeString(v[0] ?? "");
-      if (typeof v === "object") {
-        if (v.reply || v.message || v.text) return v.reply || v.message || v.text;
-        try { return JSON.stringify(v); } catch { return String(v); }
-      }
-      return String(v);
-    } catch { return ""; }
-  }
+  function mount(opts){
+    if(!opts.webhookUrl){console.error("[ChatWidget] Missing webhookUrl");return;}
+    const host=create("div");const shadow=host.attachShadow({mode:"open"});
+    const wrap=create("div",{class:"cw-wrap"});const style=create("style");style.textContent=css(opts);
 
-  function escapeHtml(s) {
-    const str = safeString(s);
-    return str.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  }
+    const btn=create("button",{class:"cw-btn",title:"Chat"},"💬");
 
-  function extractText(payload, parseOpt) {
-    try {
-      if (typeof parseOpt === "function") {
-        const out = parseOpt(payload);
-        return safeString(out);
-      }
-      return safeString(payload);
-    } catch {
-      return "Sorry, I couldn’t read that response.";
-    }
-  }
-
-  function time() {
-    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-
-  function load(storageKey) {
-    try { return JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch { return []; }
-  }
-  function save(storageKey, data) {
-    try { localStorage.setItem(storageKey, JSON.stringify(data.slice(-100))); } catch {}
-  }
-
-  function create(el, attrs, html) {
-    const e = document.createElement(el);
-    if (attrs) Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
-    if (html != null) e.innerHTML = html;
-    return e;
-  }
-
-  function mount(opts) {
-    if (!opts.webhookUrl) {
-      console.error("[ChatWidget] Missing webhookUrl");
-      return;
-    }
-
-    const host = create("div");
-    const shadow = host.attachShadow({ mode: "open" });
-    const wrap = create("div", { class: "cw-wrap" });
-    const style = create("style"); style.textContent = css(opts);
-
-    const btn = create("button", { class: "cw-btn", title: "Chat" }, "💬");
-
-    const panel = create("div", { class: "cw-panel" });
-    const header = create("div", { class: "cw-header" });
-    header.innerHTML = `
+    const panel=create("div",{class:"cw-panel"});
+    const header=create("div",{class:"cw-header"});
+    header.innerHTML=`
       <div class="cw-brand">
-        <div class="cw-ava">🤖</div>
+        <div class="cw-ava"><i class="fas fa-robot"></i></div>
         <h4 class="cw-title">${opts.title}</h4>
       </div>
       <button class="cw-close" title="Close">×</button>
     `;
 
-    const body = create("div", { class: "cw-body" });
-    const inputWrap = create("div", { class: "cw-input" });
-    inputWrap.innerHTML = `
+    const body=create("div",{class:"cw-body"});
+    const inputWrap=create("div",{class:"cw-input"});
+    inputWrap.innerHTML=`
       <div class="cw-box">
         <textarea placeholder="Write a message…" rows="1"></textarea>
-        <button class="cw-mic" title="Speak">🎤</button>
-        <button class="cw-send" title="Send">➤</button>
+        <button class="cw-mic" title="Speak"><i class="fas fa-microphone"></i></button>
+        <button class="cw-send" title="Send"><i class="fas fa-paper-plane"></i></button>
       </div>
     `;
 
-    panel.appendChild(header); panel.appendChild(body); panel.appendChild(inputWrap);
-    wrap.appendChild(btn); wrap.appendChild(panel);
-    shadow.appendChild(style); shadow.appendChild(wrap);
+    panel.appendChild(header);panel.appendChild(body);panel.appendChild(inputWrap);
+    wrap.appendChild(btn);wrap.appendChild(panel);
+    shadow.appendChild(style);shadow.appendChild(wrap);
     document.body.appendChild(host);
 
-    let messages = load(opts.storageKey);
-    if (messages.length === 0 && opts.greet) {
-      messages.push({ id: Date.now(), from: "bot", text: opts.greet, time: time() });
-      save(opts.storageKey, messages);
-    }
+    let messages=load(opts.storageKey);
+    if(messages.length===0&&opts.greet){messages.push({id:Date.now(),from:"bot",text:opts.greet,time:time()});save(opts.storageKey,messages);}
 
-    function render() {
-      body.innerHTML = "";
-      const hasUser = messages.some(m => m.from === "user");
-      if (!hasUser && opts.greet) {
-        const w = create("div", { class: "cw-welcome" }, escapeHtml(opts.greet || "Welcome 👋"));
+    function render(){
+      body.innerHTML="";
+      const hasUser=messages.some(m=>m.from==="user");
+      if(!hasUser&&opts.greet){
+        const w=create("div",{class:"cw-welcome"},escapeHtml(opts.greet||"Welcome 👋"));
         body.appendChild(w);
       }
-      messages.forEach(m => {
-        const row = create("div", { class: "cw-row " + (m.from === "user" ? "user" : "bot") });
-        const group = create("div", { class: "cw-msgwrap" });
-        const av = create("div", { class: "cw-avatar" }, m.from === "user" ? "👤" : "🤖");
-        const bubble = create("div", { class: "cw-bubble " + (m.from === "user" ? "cw-user" : "cw-bot") });
-        if (m.typing) {
-          bubble.innerHTML = `<div class="cw-typing"><div class="cw-dot"></div><div class="cw-dot"></div><div class="cw-dot"></div></div>`;
-        } else {
-          const html = `<div>${escapeHtml(m.text)}</div><div class="cw-time">${m.time}</div>`;
-          bubble.innerHTML = html;
+      messages.forEach(m=>{
+        const row=create("div",{class:"cw-row "+(m.from==="user"?"user":"bot")});
+        const group=create("div",{class:"cw-msgwrap"});
+        const av=create("div",{class:"cw-avatar"},m.from==="user"?"<i class='fas fa-user'></i>":"<i class='fas fa-robot'></i>");
+        const bubble=create("div",{class:"cw-bubble "+(m.from==="user"?"cw-user":"cw-bot")});
+        if(m.typing){
+          bubble.innerHTML=`<div class="cw-typing"><div class="cw-dot"></div><div class="cw-dot"></div><div class="cw-dot"></div></div>`;
+        }else{
+          bubble.innerHTML=`<div>${escapeHtml(m.text)}</div><div class="cw-time">${m.time}</div>`;
         }
-        group.appendChild(av); group.appendChild(bubble);
-        row.appendChild(group); body.appendChild(row);
+        group.appendChild(av);group.appendChild(bubble);
+        row.appendChild(group);body.appendChild(row);
       });
-      body.scrollTop = body.scrollHeight;
+      body.scrollTop=body.scrollHeight;
     }
 
     render();
 
-    const closeBtn = header.querySelector(".cw-close");
-    const textarea = inputWrap.querySelector("textarea");
-    const sendBtn = inputWrap.querySelector(".cw-send");
-    const micBtn = inputWrap.querySelector(".cw-mic");
+    const closeBtn=header.querySelector(".cw-close");
+    const textarea=inputWrap.querySelector("textarea");
+    const sendBtn=inputWrap.querySelector(".cw-send");
+    const micBtn=inputWrap.querySelector(".cw-mic");
 
-    function toggle() {
-      wrap.classList.toggle("cw-open");
-      if (wrap.classList.contains("cw-open")) setTimeout(() => textarea.focus(), 80);
-    }
+    function toggle(){wrap.classList.toggle("cw-open");if(wrap.classList.contains("cw-open"))setTimeout(()=>textarea.focus(),80);}
+    btn.addEventListener("click",toggle);closeBtn.addEventListener("click",toggle);
 
-    btn.addEventListener("click", toggle);
-    closeBtn.addEventListener("click", toggle);
+    textarea.addEventListener("input",()=>{textarea.style.height="auto";textarea.style.height=Math.min(textarea.scrollHeight,160)+"px";});
+    textarea.addEventListener("keydown",(e)=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}});
+    sendBtn.addEventListener("click",send);
 
-    textarea.addEventListener("input", () => {
-      textarea.style.height = "auto";
-      textarea.style.height = Math.min(textarea.scrollHeight, 160) + "px";
-    });
+    // Speech-to-text
+    const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;let recognition;
+    if(SpeechRecognition){
+      recognition=new SpeechRecognition();recognition.continuous=true;recognition.interimResults=true;recognition.lang="en-US";
+      micBtn.addEventListener("click",()=>{if(micBtn.classList.contains("recording")){recognition.stop();micBtn.classList.remove("recording");}else{textarea.value="";recognition.start();micBtn.classList.add("recording");}});
+      recognition.onresult=(event)=>{let finalTranscript="";let interimTranscript="";for(let i=0;i<event.results.length;i++){const result=event.results[i];if(result.isFinal){finalTranscript+=result[0].transcript+" ";}else{interimTranscript+=result[0].transcript;}}textarea.value=finalTranscript+interimTranscript;};
+      recognition.onerror=()=>{micBtn.classList.remove("recording");};recognition.onend=()=>{micBtn.classList.remove("recording");};
+    }else{micBtn.style.display="none";}
 
-    textarea.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-    });
-    sendBtn.addEventListener("click", send);
-
-    // ---- Speech-to-Text ----
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition;
-    if (SpeechRecognition) {
-      recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
-
-      micBtn.addEventListener("click", () => {
-        if (micBtn.classList.contains("recording")) {
-          recognition.stop();
-          micBtn.classList.remove("recording");
-        } else {
-          textarea.value = "";
-          recognition.start();
-          micBtn.classList.add("recording");
-        }
-      });
-
-      recognition.onresult = (event) => {
-        let finalTranscript = "";
-        let interimTranscript = "";
-        for (let i = 0; i < event.results.length; i++) {
-          const result = event.results[i];
-          if (result.isFinal) {
-            finalTranscript += result[0].transcript + " ";
-          } else {
-            interimTranscript += result[0].transcript;
-          }
-        }
-        textarea.value = finalTranscript + interimTranscript;
-      };
-
-      recognition.onerror = () => {
-        micBtn.classList.remove("recording");
-      };
-      recognition.onend = () => {
-        micBtn.classList.remove("recording");
-      };
-    } else {
-      micBtn.style.display = "none";
-    }
-
-    // ---- Send Function ----
-    let sending = false;
-    async function send() {
-      if (sending) return;
-      const text = textarea.value.trim();
-      if (!text) return;
-
-      const now = time();
-      messages.push({ id: Date.now(), from: "user", text, time: now });
-      render(); textarea.value = ""; textarea.style.height = "42px";
-
-      const tid = "t-" + Date.now();
-      messages.push({ id: tid, from: "bot", text: "", time: now, typing: true });
-      render();
-
-      sending = true;
-      try {
-        const history = messages.filter(m => !m.typing).map(({ from, text, time }) => ({ from, text: safeString(text), time }));
-        const payload = { [opts.messageKey]: text, history };
-        const h = opts.headers || { "Content-Type": "application/json" };
-        const ct = (h["Content-Type"] || h["content-type"] || "application/json").toLowerCase();
-        let body;
-        if (ct.includes("application/x-www-form-urlencoded")) {
-          const p = new URLSearchParams();
-          p.set(opts.messageKey, text);
-          p.set("history", JSON.stringify(history));
-          body = p.toString();
-        } else {
-          body = JSON.stringify(payload);
-        }
-        const res = await fetch(opts.webhookUrl, { method: "POST", headers: h, body });
-        const rct = (res.headers.get("content-type") || "").toLowerCase();
-        let data;
-        try { data = rct.includes("application/json") ? await res.json() : await res.text(); }
-        catch { data = await res.text(); }
-        messages = messages.filter(m => m.id !== tid);
-        const reply = extractText(data, opts.parse);
-        messages.push({ id: Date.now() + 1, from: "bot", text: reply || "(empty response)", time: time() });
-      } catch {
-        messages = messages.filter(m => m.id !== tid);
-        messages.push({ id: Date.now() + 2, from: "bot", text: "Sorry, I couldn't reach the server.", time: time() });
-      } finally {
-        save(opts.storageKey, messages);
-        render();
-        sending = false;
-      }
+    // Send
+    let sending=false;
+    async function send(){
+      if(sending)return;
+      const text=textarea.value.trim();if(!text)return;
+      const now=time();
+      messages.push({id:Date.now(),from:"user",text,time:now});render();textarea.value="";textarea.style.height="42px";
+      const tid="t-"+Date.now();messages.push({id:tid,from:"bot",text:"",time:now,typing:true});render();
+      sending=true;
+      try{
+        const history=messages.filter(m=>!m.typing).map(({from,text,time})=>({from,text:safeString(text),time}));
+        const payload={[opts.messageKey]:text,history};
+        const h=opts.headers||{"Content-Type":"application/json"};
+        const ct=(h["Content-Type"]||h["content-type"]||"application/json").toLowerCase();
+        let body;if(ct.includes("application/x-www-form-urlencoded")){const p=new URLSearchParams();p.set(opts.messageKey,text);p.set("history",JSON.stringify(history));body=p.toString();}else{body=JSON.stringify(payload);}
+        const res=await fetch(opts.webhookUrl,{method:"POST",headers:h,body});
+        const rct=(res.headers.get("content-type")||"").toLowerCase();let data;
+        try{data=rct.includes("application/json")?await res.json():await res.text();}catch{data=await res.text();}
+        messages=messages.filter(m=>m.id!==tid);
+        const reply=extractText(data,opts.parse);
+        messages.push({id:Date.now()+1,from:"bot",text:reply||"(empty response)",time:time()});
+      }catch{messages=messages.filter(m=>m.id!==tid);messages.push({id:Date.now()+2,from:"bot",text:"Sorry, I couldn't reach the server.",time:time()});}
+      finally{save(opts.storageKey,messages);render();sending=false;}
     }
   }
 
-  window.ChatWidget = {
-    init: function (options) {
-      const opts = Object.assign({}, DEFAULTS, options || {});
-      mount(opts);
-    }
-  };
+  window.ChatWidget={init:function(options){const opts=Object.assign({},DEFAULTS,options||{});mount(opts);}};
 })();
