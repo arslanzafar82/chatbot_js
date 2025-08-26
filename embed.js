@@ -1,4 +1,3 @@
-<script>
 
   (function () {
   const DEFAULTS = {
@@ -283,5 +282,3 @@
     }
   };
 })();
-
-</script>

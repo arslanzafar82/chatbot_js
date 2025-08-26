@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Chat Widget</title>
+  <style>
+    body { margin: 0; }
+  </style>
+</head>
+<body>
+  <script src="embed.js"></script>
+  <script>
+    // Read query params from iframe URL
+    const params = new URLSearchParams(window.location.search);
+
+    const webhookUrl = params.get("webhook") || "";
+    const title = params.get("title") || "Assistant";
+    const greet = params.get("greet") || "👋 Hi! Ask me anything.";
+    const position = params.get("position") || "right";
+
+    if (webhookUrl) {
+      ChatWidget.init({
+        webhookUrl,
+        title,
+        greet,
+        position
+      });
+    } else {
+      document.body.innerHTML = "<p style='font-family:sans-serif;color:red;padding:20px;'>Missing webhook URL</p>";
+    }
+  </script>
+</body>
+</html>
