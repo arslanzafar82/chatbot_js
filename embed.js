@@ -57,7 +57,7 @@
       .cw-box{display:flex;gap:8px;align-items:flex-end;border:1px solid ${c("border")};border-radius:12px;padding:8px;background:#fff}
       textarea{flex:1;border:0;outline:none;background:transparent;resize:none;min-height:42px;max-height:120px}
       .cw-send{border:0;border-radius:10px;padding:10px 12px;background:${c("accent")};color:#fff;font-weight:700;cursor:pointer}
-      .cw-mic{border:0;border-radius:10px;padding:10px 12px;background:#f43f5e;color:#fff;font-weight:700;cursor:pointer}
+      .cw-mic{border:0;border-radius:10px;padding:10px 12px;background:#16a34a;color:#fff;font-weight:700;cursor:pointer}
       .cw-mic.recording{background:#16a34a}
       .cw-typing{display:flex;gap:6px;padding:8px 10px}
       .cw-dot{width:8px;height:8px;border-radius:50%;background:${c("subtext")};animation:cw-b 1.4s infinite both}
