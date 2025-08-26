@@ -1,12 +1,10 @@
-
-  (function () {
+(function () {
   const DEFAULTS = {
     webhookUrl: "",                 // <-- REQUIRED: your n8n/Zapier webhook
     title: "Assistant",
     greet: "👋 Hi! Ask me anything.",
     position: "right",              // "right" | "left"
     zIndex: 999999,
-    // Theme (brandable)
     accent: "#16a34a",              // launcher + send button + accents
     headerBg: "#ffffff",
     headerText: "#111827",
@@ -20,15 +18,15 @@
     botBubble: "#f3f4f6",
     botText: "#111827",
     botBorder: "#e5e7eb",
-    avatarBg: "#374151",            // dark gray (55,65,81)
+    avatarBg: "#374151",
     avatarText: "#ffffff",
-    corner: 16,                      // border radius
+    corner: 16,
     width: 360,
     height: 520,
     storageKey: "cw_chat_messages_v1",
-    headers: { "Content-Type": "application/json" }, // you can override (e.g., text/plain)
-    messageKey: "message",          // field used to send the input
-    parse: null                      // optional: (response:any)=>string
+    headers: { "Content-Type": "application/json" },
+    messageKey: "message",
+    parse: null
   };
 
   function css(opts) {
@@ -59,6 +57,8 @@
       .cw-box{display:flex;gap:8px;align-items:flex-end;border:1px solid ${c("border")};border-radius:12px;padding:8px;background:#fff}
       textarea{flex:1;border:0;outline:none;background:transparent;resize:none;min-height:42px;max-height:120px}
       .cw-send{border:0;border-radius:10px;padding:10px 12px;background:${c("accent")};color:#fff;font-weight:700;cursor:pointer}
+      .cw-mic{border:0;border-radius:10px;padding:10px 12px;background:#f43f5e;color:#fff;font-weight:700;cursor:pointer}
+      .cw-mic.recording{background:#16a34a}
       .cw-typing{display:flex;gap:6px;padding:8px 10px}
       .cw-dot{width:8px;height:8px;border-radius:50%;background:${c("subtext")};animation:cw-b 1.4s infinite both}
       .cw-dot:nth-child(2){animation-delay:.1s}.cw-dot:nth-child(3){animation-delay:.2s}
@@ -148,6 +148,7 @@
     inputWrap.innerHTML = `
       <div class="cw-box">
         <textarea placeholder="Write a message…" rows="1"></textarea>
+        <button class="cw-mic" title="Speak">🎤</button>
         <button class="cw-send" title="Send">➤</button>
       </div>
     `;
@@ -199,6 +200,7 @@
     const closeBtn = header.querySelector(".cw-close");
     const textarea = inputWrap.querySelector("textarea");
     const sendBtn = inputWrap.querySelector(".cw-send");
+    const micBtn = inputWrap.querySelector(".cw-mic");
 
     function toggle() {
       wrap.classList.toggle("cw-open");
@@ -218,6 +220,46 @@
     });
     sendBtn.addEventListener("click", send);
 
+    // ---- Speech-to-Text Feature ----
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+
+      micBtn.addEventListener("click", () => {
+        if (micBtn.classList.contains("recording")) {
+          recognition.stop();
+          micBtn.classList.remove("recording");
+        } else {
+          recognition.start();
+          micBtn.classList.add("recording");
+        }
+      });
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        textarea.value = transcript;
+        micBtn.classList.remove("recording");
+      };
+
+      recognition.onerror = (err) => {
+        console.error("Speech recognition error", err);
+        micBtn.classList.remove("recording");
+      };
+
+      recognition.onend = () => {
+        micBtn.classList.remove("recording");
+      };
+    } else {
+      micBtn.style.display = "none";
+      console.warn("Speech recognition not supported in this browser.");
+    }
+
+    // ---- Send Function ----
     let sending = false;
     async function send() {
       if (sending) return;
@@ -237,7 +279,6 @@
         const history = messages.filter(m => !m.typing).map(({ from, text, time }) => ({ from, text: safeString(text), time }));
         const payload = { [opts.messageKey]: text, history };
 
-        // Decide body based on content-type
         const h = opts.headers || { "Content-Type": "application/json" };
         const ct = (h["Content-Type"] || h["content-type"] || "application/json").toLowerCase();
         let body;
@@ -247,7 +288,6 @@
           p.set("history", JSON.stringify(history));
           body = p.toString();
         } else {
-          // works for both application/json and text/plain
           body = JSON.stringify(payload);
         }
 
@@ -257,12 +297,10 @@
         try { data = rct.includes("application/json") ? await res.json() : await res.text(); }
         catch { data = await res.text(); }
 
-        // remove typing, add reply
         messages = messages.filter(m => m.id !== tid);
         const reply = extractText(data, opts.parse);
         messages.push({ id: Date.now() + 1, from: "bot", text: reply || "(empty response)", time: time() });
       } catch (err) {
-        // remove typing, show error
         messages = messages.filter(m => m.id !== tid);
         messages.push({ id: Date.now() + 2, from: "bot", text: "Sorry, I couldn't reach the server.", time: time() });
         console.error("[ChatWidget] send error", err);
