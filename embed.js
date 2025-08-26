@@ -33,9 +33,9 @@
     const c = (k) => opts[k];
     return `
       *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif}
-      .cw-wrap{position:fixed;bottom:16px;${opts.position==="left"?"left":"right"}:16px;z-index:${opts.zIndex}}
+      .cw-wrap{position:fixed;bottom:16px;${opts.position === "left" ? "left" : "right"}:16px;z-index:${opts.zIndex}}
       .cw-btn{width:56px;height:56px;border-radius:50%;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(0,0,0,.18);background:${c("accent")};color:#fff;font-weight:800}
-      .cw-panel{position:absolute;bottom:72px;${opts.position==="left"?"left":"right"}:0;width:${opts.width}px;height:${opts.height}px;border:1px solid ${c("border")};border-radius:${opts.corner}px;overflow:hidden;background:${c("panelBg")};box-shadow:0 22px 60px rgba(0,0,0,.18);display:none}
+      .cw-panel{position:absolute;bottom:72px;${opts.position === "left" ? "left" : "right"}:0;width:${opts.width}px;height:${opts.height}px;border:1px solid ${c("border")};border-radius:${opts.corner}px;overflow:hidden;background:${c("panelBg")};box-shadow:0 22px 60px rgba(0,0,0,.18);display:none}
       .cw-open .cw-panel{display:flex;flex-direction:column}
       .cw-header{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 10px;background:${c("headerBg")};color:${c("headerText")};border-bottom:1px solid ${c("border")}}
       .cw-brand{display:flex;align-items:center;gap:10px}
@@ -57,8 +57,19 @@
       .cw-box{display:flex;gap:8px;align-items:flex-end;border:1px solid ${c("border")};border-radius:12px;padding:8px;background:#fff}
       textarea{flex:1;border:0;outline:none;background:transparent;resize:none;min-height:42px;max-height:120px}
       .cw-send{border:0;border-radius:10px;padding:10px 12px;background:${c("accent")};color:#fff;font-weight:700;cursor:pointer}
-      .cw-mic{border:0;border-radius:10px;padding:10px 12px;background:#16a34a;color:#fff;font-weight:700;cursor:pointer}
-      .cw-mic.recording{background:#16a34a}
+      .cw-mic {
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #16a34a;  /* gray when idle */
+        
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .cw-mic.recording {
+        background: #6b7280;  /* blue when recording */
+      }
       .cw-typing{display:flex;gap:6px;padding:8px 10px}
       .cw-dot{width:8px;height:8px;border-radius:50%;background:${c("subtext")};animation:cw-b 1.4s infinite both}
       .cw-dot:nth-child(2){animation-delay:.1s}.cw-dot:nth-child(3){animation-delay:.2s}
@@ -106,7 +117,7 @@
     try { return JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch { return []; }
   }
   function save(storageKey, data) {
-    try { localStorage.setItem(storageKey, JSON.stringify(data.slice(-100))); } catch {}
+    try { localStorage.setItem(storageKey, JSON.stringify(data.slice(-100))); } catch { }
   }
 
   function create(el, attrs, html) {
