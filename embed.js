@@ -5,21 +5,23 @@
     greet: "👋 Hi! Ask me anything.",
     position: "right",
     zIndex: 999999,
-    accent: "#16a34a",
+    accent: "#6d28d9",              // purple send button
     headerBg: "#ffffff",
     headerText: "#111827",
     panelBg: "#ffffff",
     border: "#e5e7eb",
     text: "#111827",
     subtext: "#6b7280",
-    userBubble: "#16a34a",
+    // user bubble gradient (purple)
+    userBubble: "linear-gradient(90deg,#9333ea,#6d28d9)", 
     userText: "#ffffff",
-    userBorder: "#15803d",
+    userBorder: "transparent",
+    // bot bubble light gray
     botBubble: "#f3f4f6",
     botText: "#111827",
     botBorder: "#e5e7eb",
-    avatarBg: "#374151",
-    avatarText: "#ffffff",
+    avatarBg: "#f3f4f6",
+    avatarText: "#111827",
     corner: 16,
     width: 360,
     height: 520,
@@ -39,7 +41,7 @@
       .cw-open .cw-panel{display:flex;flex-direction:column}
       .cw-header{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 10px;background:${c("headerBg")};color:${c("headerText")};border-bottom:1px solid ${c("border")}}
       .cw-brand{display:flex;align-items:center;gap:10px}
-      .cw-ava{width:28px;height:28px;border-radius:10px;background:${c("avatarBg")};color:${c("avatarText")};display:flex;align-items:center;justify-content:center;font-size:14px}
+      .cw-ava{width:28px;height:28px;border-radius:50%;background:${c("avatarBg")};color:${c("avatarText")};display:flex;align-items:center;justify-content:center;font-size:14px}
       .cw-title{margin:0;font-weight:700}
       .cw-close{border:1px solid ${c("border")};background:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer;color:${c("avatarBg")}}
       .cw-body{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#fff}
@@ -48,33 +50,21 @@
       .cw-row.user{justify-content:flex-end}
       .cw-msgwrap{display:flex;gap:8px;align-items:flex-start;max-width:76%}
       .cw-row.user .cw-msgwrap{flex-direction:row-reverse}
-      .cw-avatar{width:28px;height:28px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;background:${c("avatarBg")}}
-      .cw-bubble{padding:10px 12px;border-radius:14px;border:1px solid;box-shadow:0 8px 20px rgba(0,0,0,.06)}
-      .cw-bot{background:${c("botBubble")};color:${c("botText")};border-color:${c("botBorder")};border-bottom-left-radius:8px}
-      .cw-user{background:${c("userBubble")};color:${c("userText")};border-color:${c("userBorder")};border-bottom-right-radius:8px}
+      .cw-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:${c("avatarText")};background:${c("avatarBg")}}
+      .cw-bubble{padding:10px 12px;border-radius:16px;border:1px solid;box-shadow:0 4px 10px rgba(0,0,0,.06)}
+      .cw-bot{background:${c("botBubble")};color:${c("botText")};border-color:${c("botBorder")};border-bottom-left-radius:6px}
+      .cw-user{background:${c("userBubble")};color:${c("userText")};border-color:${c("userBorder")};border-bottom-right-radius:6px}
       .cw-time{margin-top:6px;font-size:11px;color:${c("subtext")}}
       .cw-input{border-top:1px solid ${c("border")};padding:10px;background:#fff}
       .cw-box{display:flex;gap:8px;align-items:flex-end;border:1px solid ${c("border")};border-radius:12px;padding:8px;background:#fff}
       textarea{flex:1;border:0;outline:none;background:transparent;resize:none;min-height:42px;max-height:120px}
-      .cw-send{border:0;border-radius:10px;padding:10px 12px;background:${c("accent")};color:#fff;font-weight:700;cursor:pointer}
-      .cw-mic {
-        border: 0;
-        border-radius: 10px;
-        padding: 10px 12px;
-        background: #16a34a;  /* idle = green */
-        color: #fff;
-        font-weight: 700;
-        cursor: pointer;
-        position: relative;
-      }
-      .cw-mic.recording {
-        background: #374151; /* recording = dark gray */
-        animation: pulse 1.5s infinite;
-      }
+      .cw-send{border:0;border-radius:50%;padding:10px 12px;background:${c("accent")};color:#fff;font-weight:700;cursor:pointer}
+      .cw-mic {border:0;border-radius:50%;padding:10px 12px;background:#16a34a;color:#fff;font-weight:700;cursor:pointer;position:relative}
+      .cw-mic.recording {background:#374151;animation:pulse 1.5s infinite}
       @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(55,65,81,0.7); }
-        70% { box-shadow: 0 0 0 15px rgba(55,65,81,0); }
-        100% { box-shadow: 0 0 0 0 rgba(55,65,81,0); }
+        0% { box-shadow:0 0 0 0 rgba(55,65,81,0.7);}
+        70%{ box-shadow:0 0 0 12px rgba(55,65,81,0);}
+        100%{ box-shadow:0 0 0 0 rgba(55,65,81,0);}
       }
       .cw-typing{display:flex;gap:6px;padding:8px 10px}
       .cw-dot{width:8px;height:8px;border-radius:50%;background:${c("subtext")};animation:cw-b 1.4s infinite both}
@@ -83,6 +73,7 @@
       @media (max-width: 420px){ .cw-panel{width:calc(100vw - 32px);height:70vh} }
     `;
   }
+
 
   function safeString(v) {
     try {
