@@ -64,10 +64,30 @@
     .cw-msgwrap{display:flex;gap:8px;align-items:flex-start;max-width:80%}
     .cw-row.user .cw-msgwrap{flex-direction:row-reverse}
     .cw-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:${c("avatarText")};background:${c("avatarBg")}}
-    .cw-bubble{padding:8px 10px;border-radius:14px;border:1px solid;box-shadow:0 2px 6px rgba(0,0,0,.06);font-size:13px;line-height:1.4}
+    .cw-bubble {
+  position: relative;
+  padding: 8px 10px 18px 10px; /* extra bottom padding for timestamp */
+  border-radius: 14px;
+  border: 1px solid;
+  box-shadow: 0 2px 6px rgba(0,0,0,.06);
+  font-size: 13px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
     .cw-bot{background:${c("botBubble")};color:${c("botText")};border-color:${c("botBorder")};border-bottom-left-radius:6px}
     .cw-user{background:${c("userBubble")};color:${c("userText")};border-color:${c("userBorder")};border-bottom-right-radius:6px}
-    .cw-time{margin-top:4px;font-size:10px;color:${c("subtext")}}
+    .cw-time {
+      position: absolute;
+      bottom: 4px;
+      right: 8px;
+      font-size: 10px;
+      opacity: 0.8;
+    }
+    .cw-row.bot .cw-time {
+  color: ${c("subtext")};         /* gray on light bubble */
+}
     .cw-row.user .cw-time{color:rgba(255,255,255,0.85)}
     .cw-input{border-top:1px solid ${c("border")};padding:10px;background:#fff}
     .cw-box{display:flex;gap:8px;align-items:flex-end;border:1px solid ${c("border")};border-radius:12px;padding:8px;background:#fff}
