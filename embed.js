@@ -68,6 +68,7 @@
         position: relative;
       }
       .cw-mic.recording {
+        background: #374151;
         animation: pulse 1.5s infinite;
       }
       @keyframes pulse {
