@@ -3,7 +3,7 @@
     webhookUrl: "",                 // <-- REQUIRED: your n8n/Zapier webhook
     title: "Assistant",
     greet: "👋 Hi! Ask me anything.",
-    position: "right",              // "right" | "left"
+    position: "right",
     zIndex: 999999,
     accent: "#16a34a",
     headerBg: "#ffffff",
@@ -61,20 +61,20 @@
         border: 0;
         border-radius: 10px;
         padding: 10px 12px;
-        background: #16a34a;  /* stays green */
+        background: #16a34a;  /* idle = green */
         color: #fff;
         font-weight: 700;
         cursor: pointer;
         position: relative;
       }
       .cw-mic.recording {
-        background: #374151;
+        background: #374151; /* recording = dark gray */
         animation: pulse 1.5s infinite;
       }
       @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(22,163,74, 0.7); }
-        70% { box-shadow: 0 0 0 15px rgba(22,163,74, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(22,163,74, 0); }
+        0% { box-shadow: 0 0 0 0 rgba(55,65,81,0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(55,65,81,0); }
+        100% { box-shadow: 0 0 0 0 rgba(55,65,81,0); }
       }
       .cw-typing{display:flex;gap:6px;padding:8px 10px}
       .cw-dot{width:8px;height:8px;border-radius:50%;background:${c("subtext")};animation:cw-b 1.4s infinite both}
@@ -139,7 +139,6 @@
       return;
     }
 
-    // Root & Shadow DOM
     const host = create("div");
     const shadow = host.attachShadow({ mode: "open" });
     const wrap = create("div", { class: "cw-wrap" });
