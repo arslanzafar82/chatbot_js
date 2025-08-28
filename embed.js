@@ -2,10 +2,10 @@
   const DEFAULTS = {
     webhookUrl: "",
     title: "Assistant",
-    greet: "👋 Hi! Ask me anything.",
+    greet: "👋 Hi! I’m Kodee, Hostinger AI sales expert 🤖. How can I help you today?",
     position: "right",
     zIndex: 999999,
-    accent: "#6d28d9",              // purple accent
+    accent: "#6d28d9",
     headerBg: "#ffffff",
     headerText: "#111827",
     panelBg: "#ffffff",
@@ -26,7 +26,8 @@
     storageKey: "cw_chat_messages_v1",
     headers: { "Content-Type": "application/json" },
     messageKey: "message",
-    parse: null
+    parse: null,
+    sendHistory: false
   };
 
   function css(opts) {
@@ -41,24 +42,33 @@
     .cw-brand{display:flex;align-items:center;gap:10px}
     .cw-ava{width:28px;height:28px;border-radius:50%;background:${c("avatarBg")};color:${c("avatarText")};display:flex;align-items:center;justify-content:center;font-size:14px}
     .cw-title{margin:0;font-weight:700}
-.cw-close {
-  border: 1px solid ${c("border")};
-  background: #fff;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  color: #111827;    /* DARK text, always visible */
-  font-size: 20px;   /* bigger × */
-  font-weight: bold; /* stronger × */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, color 0.2s;
-}
-
+    .cw-close {
+      border: 1px solid ${c("border")};
+      background: #fff;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      color: #111827;
+      font-size: 20px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
     .cw-body{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#fff}
-    .cw-welcome{margin:auto;text-align:center;padding:18px;border:1px dashed ${c("border")};border-radius:${opts.corner}px;color:${c("subtext")};max-width:260px;font-size:13px}
+    .cw-welcome{
+      margin:auto;
+      text-align:center;
+      padding:24px;
+      border:1px dashed ${c("border")};
+      border-radius:${opts.corner}px;
+      color:${c("subtext")};
+      max-width:280px;
+      font-size:14px;
+      line-height:1.6;
+    }
     .cw-row{display:flex}
     .cw-row.user{justify-content:flex-end}
     .cw-msgwrap{display:flex;gap:8px;align-items:flex-start;max-width:80%}
@@ -66,7 +76,7 @@
     .cw-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:${c("avatarText")};background:${c("avatarBg")}}
     .cw-bubble {
       position: relative;
-      padding: 8px 10px 18px 10px; /* extra bottom padding for timestamp */
+      padding: 8px 10px 18px 10px;
       border-radius: 14px;
       border: 1px solid;
       box-shadow: 0 2px 6px rgba(0,0,0,.06);
@@ -75,28 +85,20 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
       white-space: pre-wrap;
-      min-width: 60px;   /* 👈 ensures bubble is wide enough */
+      min-width: 60px;
       max-width: 80%;
     }
     .cw-bot{background:${c("botBubble")};color:${c("botText")};border-color:${c("botBorder")};border-bottom-left-radius:6px}
     .cw-user{background:${c("userBubble")};color:${c("userText")};border-color:${c("userBorder")};border-bottom-right-radius:6px}
-    .cw-time {
-      position: absolute;
-      bottom: 4px;
-      right: 8px;
-      font-size: 10px;
-      opacity: 0.8;
-    }
-    .cw-row.bot .cw-time {
-  color: ${c("subtext")};         /* gray on light bubble */
-}
+    .cw-time {position: absolute;bottom: 4px;right: 8px;font-size: 10px;opacity: 0.8;}
+    .cw-row.bot .cw-time {color: ${c("subtext")};}
     .cw-row.user .cw-time{color:rgba(255,255,255,0.85)}
     .cw-input{border-top:1px solid ${c("border")};padding:10px;background:#fff}
     .cw-box{display:flex;gap:8px;align-items:flex-end;border:1px solid ${c("border")};border-radius:12px;padding:8px;background:#fff}
     textarea{flex:1;border:0;outline:none;background:transparent;resize:none;min-height:42px;max-height:120px;font-size:13px}
     .cw-send, .cw-mic {display:flex;align-items:center;justify-content:center;font-size:16px;border:0;border-radius:50%;padding:10px 12px;color:#fff;cursor:pointer}
     .cw-send{background:${c("accent")}}
-    .cw-mic{background:#2563eb} /* BLUE mic button */
+    .cw-mic{background:#2563eb}
     .cw-mic.recording{background:#1e40af;animation:pulse 1.5s infinite}
     @keyframes pulse {
       0%{box-shadow:0 0 0 0 rgba(37,99,235,0.6);}
@@ -107,14 +109,13 @@
     .cw-dot{width:8px;height:8px;border-radius:50%;background:${c("subtext")};animation:cw-b 1.4s infinite both}
     .cw-dot:nth-child(2){animation-delay:.1s}.cw-dot:nth-child(3){animation-delay:.2s}
     @keyframes cw-b{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
-    @media (max-width: 420px){ 
-      .cw-panel{width:calc(100vw - 32px);height:70vh} 
-      .cw-msgwrap{max-width:90%} /* more width on small screens */
-      .cw-bubble{font-size:12px}  /* slightly smaller on mobile */
+    @media (max-width: 420px){
+      .cw-panel{width:calc(100vw - 32px);height:70vh}
+      .cw-msgwrap{max-width:90%}
+      .cw-bubble{font-size:12px}
     }
-  `;
+    `;
   }
-
 
   function safeString(v) { try { if (v == null) return ""; if (typeof v === "string") return v; if (typeof v === "number" || typeof v === "boolean") return String(v); if (Array.isArray(v)) return safeString(v[0] ?? ""); if (typeof v === "object") { if (v.reply || v.message || v.text) return v.reply || v.message || v.text; try { return JSON.stringify(v) } catch { return String(v) } } return String(v) } catch { return "" } }
   function escapeHtml(s) { const str = safeString(s); return str.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
@@ -132,15 +133,12 @@
     const wrap = create("div", { class: "cw-wrap" });
     const style = create("style"); style.textContent = css(opts);
 
-    // Inject Font Awesome into Shadow DOM
     const faLink = document.createElement("link");
     faLink.rel = "stylesheet";
     faLink.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css";
 
-    // Launcher button
     const btn = create("button", { class: "cw-btn", title: "Chat" }, "💬");
 
-    // Panel
     const panel = create("div", { class: "cw-panel" });
     const header = create("div", { class: "cw-header" });
     header.innerHTML = `
@@ -166,13 +164,18 @@
     shadow.appendChild(style); shadow.appendChild(faLink); shadow.appendChild(wrap);
     document.body.appendChild(host);
 
-    let messages = load(opts.storageKey);
-    if (messages.length === 0 && opts.greet) { messages.push({ id: Date.now(), from: "bot", text: opts.greet, time: time() }); save(opts.storageKey, messages); }
+    let messages = opts.sendHistory ? load(opts.storageKey) : [];
 
     function render() {
       body.innerHTML = "";
       const hasUser = messages.some(m => m.from === "user");
-      if (!hasUser && opts.greet) { const w = create("div", { class: "cw-welcome" }, escapeHtml(opts.greet || "Welcome 👋")); body.appendChild(w); }
+
+      // Show welcome card if no user messages yet
+      if (!hasUser && opts.greet) {
+        const w = create("div", { class: "cw-welcome" }, escapeHtml(opts.greet));
+        body.appendChild(w);
+      }
+
       messages.forEach(m => {
         const row = create("div", { class: "cw-row " + (m.from === "user" ? "user" : "bot") });
         const group = create("div", { class: "cw-msgwrap" });
@@ -215,7 +218,11 @@
 
       recognition.onresult = (event) => {
         let finalTranscript = ""; let interimTranscript = "";
-        for (let i = 0; i < event.results.length; i++) { const result = event.results[i]; if (result.isFinal) { finalTranscript += result[0].transcript + " "; } else { interimTranscript += result[0].transcript; } }
+        for (let i = 0; i < event.results.length; i++) {
+          const result = event.results[i];
+          if (result.isFinal) { finalTranscript += result[0].transcript + " "; }
+          else { interimTranscript += result[0].transcript; }
+        }
         textarea.value = finalTranscript + interimTranscript;
       };
 
@@ -237,20 +244,40 @@
       render();
       sending = true;
       try {
-        const history = messages.filter(m => !m.typing).map(({ from, text, time }) => ({ from, text: safeString(text), time }));
+        let history = [];
+        if (opts.sendHistory) {
+          history = messages.filter(m => !m.typing).map(({ from, text, time }) => ({
+            from, text: safeString(text), time
+          }));
+        }
+
         const payload = { [opts.messageKey]: text, history };
         const h = opts.headers || { "Content-Type": "application/json" };
         const ct = (h["Content-Type"] || h["content-type"] || "application/json").toLowerCase();
-        let body; if (ct.includes("application/x-www-form-urlencoded")) { const p = new URLSearchParams(); p.set(opts.messageKey, text); p.set("history", JSON.stringify(history)); body = p.toString(); }
-        else { body = JSON.stringify(payload); }
+        let body;
+        if (ct.includes("application/x-www-form-urlencoded")) {
+          const p = new URLSearchParams();
+          p.set(opts.messageKey, text);
+          p.set("history", JSON.stringify(history));
+          body = p.toString();
+        } else {
+          body = JSON.stringify(payload);
+        }
         const res = await fetch(opts.webhookUrl, { method: "POST", headers: h, body });
         const rct = (res.headers.get("content-type") || "").toLowerCase();
         let data; try { data = rct.includes("application/json") ? await res.json() : await res.text(); } catch { data = await res.text(); }
         messages = messages.filter(m => m.id !== tid);
         const reply = extractText(data, opts.parse);
         messages.push({ id: Date.now() + 1, from: "bot", text: reply || "(empty response)", time: time() });
-      } catch { messages = messages.filter(m => m.id !== tid); messages.push({ id: Date.now() + 2, from: "bot", text: "Sorry, I couldn't reach the server.", time: time() }); }
-      finally { save(opts.storageKey, messages); render(); sending = false; }
+      } catch {
+        messages = messages.filter(m => m.id !== tid);
+        messages.push({ id: Date.now() + 2, from: "bot", text: "Sorry, I couldn't reach the server.", time: time() });
+      }
+      finally {
+        if (opts.sendHistory) save(opts.storageKey, messages);
+        render();
+        sending = false;
+      }
     }
   }
 

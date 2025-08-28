@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8" />
   <title>Chat Widget</title>
   <style>
-    body { margin: 0; }
+    body {
+      margin: 0;
+    }
   </style>
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
+
 <body>
-    
   <script src="embed.js"></script>
   <script>
     // Read query params from iframe URL
@@ -18,19 +20,25 @@
 
     const webhookUrl = params.get("webhook") || "";
     const title = params.get("title") || "Assistant";
-    const greet = params.get("greet") || "👋 Hi! Ask me anything.";
+    const greet = params.get("greet") || "👋 Hi! I’m "+title+", AI expert 🤖. How can I help you today?";
     const position = params.get("position") || "right";
 
+    // Parse history flag → boolean
+    const sendHistory = (params.get("history") || "true").toLowerCase() === "true";
+    console.log(sendHistory);
     if (webhookUrl) {
       ChatWidget.init({
         webhookUrl,
         title,
         greet,
-        position
+        position,
+        sendHistory
       });
     } else {
-      document.body.innerHTML = "<p style='font-family:sans-serif;color:red;padding:20px;'>Missing webhook URL</p>";
+      document.body.innerHTML =
+        "<p style='font-family:sans-serif;color:red;padding:20px;'>Missing webhook URL</p>";
     }
   </script>
 </body>
+
 </html>
