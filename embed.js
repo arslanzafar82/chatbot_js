@@ -84,9 +84,111 @@
       line-height: 1.4;
       word-wrap: break-word;
       overflow-wrap: break-word;
-      white-space: pre-wrap;
+      white-space: normal;
       min-width: 60px;
       max-width: 80%;
+    }
+    .cw-bubble h1, .cw-bubble h2, .cw-bubble h3, .cw-bubble h4, .cw-bubble h5, .cw-bubble h6 {
+      margin: 12px 0 6px 0;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .cw-bubble h1 { font-size: 18px; }
+    .cw-bubble h2 { font-size: 16px; }
+    .cw-bubble h3 { font-size: 15px; }
+    .cw-bubble h4 { font-size: 14px; }
+    .cw-bubble h5 { font-size: 13px; }
+    .cw-bubble h6 { font-size: 12px; }
+    .cw-bubble h1:first-child, .cw-bubble h2:first-child, .cw-bubble h3:first-child,
+    .cw-bubble h4:first-child, .cw-bubble h5:first-child, .cw-bubble h6:first-child {
+      margin-top: 0;
+    }
+    .cw-bubble ul, .cw-bubble ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    .cw-bubble li {
+      margin: 3px 0;
+      line-height: 1.4;
+    }
+    .cw-bubble a {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+    .cw-bubble a:hover {
+      color: #1d4ed8;
+    }
+    .cw-user a {
+      color: #bfdbfe;
+    }
+    .cw-bubble strong, .cw-bubble b {
+      font-weight: 600;
+    }
+    .cw-bubble em, .cw-bubble i {
+      font-style: italic;
+    }
+    .cw-bubble code {
+      background: #f3f4f6;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #e11d48;
+    }
+    .cw-user code {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fecaca;
+    }
+    .cw-bubble pre {
+      background: #f3f4f6;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      margin: 10px 0;
+      overflow-x: auto;
+      border-left: 3px solid #e5e7eb;
+    }
+    .cw-user pre {
+      background: rgba(255, 255, 255, 0.1);
+      border-left-color: rgba(255, 255, 255, 0.3);
+    }
+    .cw-bubble pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+    .cw-bubble p {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+    .cw-bubble p:first-child {
+      margin-top: 0;
+    }
+    .cw-bubble p:last-child {
+      margin-bottom: 0;
+    }
+    .cw-bubble blockquote {
+      margin: 10px 0;
+      padding: 8px 12px;
+      border-left: 3px solid #d1d5db;
+      background: #f9fafb;
+      font-style: italic;
+    }
+    .cw-user blockquote {
+      border-left-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .cw-bubble hr {
+      margin: 16px 0;
+      border: none;
+      border-top: 1px solid #e5e7eb;
+    }
+    .cw-user hr {
+      border-top-color: rgba(255, 255, 255, 0.3);
+    }
+    .cw-bubble div {
+      line-height: 1.5;
     }
     .cw-bot{background:${c("botBubble")};color:${c("botText")};border-color:${c("botBorder")};border-bottom-left-radius:6px}
     .cw-user{background:${c("userBubble")};color:${c("userText")};border-color:${c("userBorder")};border-bottom-right-radius:6px}
@@ -124,6 +226,47 @@
   function load(storageKey) { try { return JSON.parse(localStorage.getItem(storageKey) || "[]"); } catch { return []; } }
   function save(storageKey, data) { try { localStorage.setItem(storageKey, JSON.stringify(data.slice(-100))); } catch { } }
   function create(el, attrs, html) { const e = document.createElement(el); if (attrs) Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v)); if (html != null) e.innerHTML = html; return e; }
+
+  function formatMessage(text) {
+    if (!text) return '';
+    
+    // Convert escaped newlines to actual newlines
+    let cleanText = text.replace(/\\n/g, '\n');
+    
+    // Fix malformed markdown by adding proper spacing and formatting
+    cleanText = cleanText
+      // Fix broken bold formatting (** at start of line)
+      .replace(/\n\*\*\s*\n/g, '\n')
+      .replace(/\*\*\s*\n([^\n]+:)/g, '**$1')
+      // Add line breaks before headers if missing
+      .replace(/(.)#/g, '$1\n#')
+      // Add line breaks after headers
+      .replace(/(#{1,6}[^\n]+)/g, '$1\n')
+      // Add line breaks before list items if missing
+      .replace(/([^\n])-\s/g, '$1\n- ')
+      // Fix contact info formatting
+      .replace(/(.)(Address:|Phone:|Email:|Website:)/g, '$1\n$2')
+      // Clean up multiple consecutive newlines
+      .replace(/\n{3,}/g, '\n\n')
+      // Remove leading/trailing whitespace
+      .trim();
+    
+    // Use marked.js to parse markdown
+    if (typeof marked !== 'undefined') {
+      try {
+        return marked.parse(cleanText, {
+          breaks: true,
+          gfm: true,
+          sanitize: false
+        });
+      } catch (e) {
+        console.warn('Marked.js parsing failed:', e);
+      }
+    }
+    
+    // Fallback to simple text formatting if marked.js is not available
+    return cleanText.replace(/\n/g, '<br>');
+  }
 
   function mount(opts) {
     if (!opts.webhookUrl) { console.error("[ChatWidget] Missing webhookUrl"); return; }
@@ -182,7 +325,11 @@
         const av = create("div", { class: "cw-avatar" }, m.from === "user" ? `<i class="fas fa-user"></i>` : `<i class="fas fa-robot"></i>`);
         const bubble = create("div", { class: "cw-bubble " + (m.from === "user" ? "cw-user" : "cw-bot") });
         if (m.typing) { bubble.innerHTML = `<div class="cw-typing"><div class="cw-dot"></div><div class="cw-dot"></div><div class="cw-dot"></div></div>`; }
-        else { bubble.innerHTML = `<div>${escapeHtml(m.text)}</div><div class="cw-time">${m.time}</div>`; }
+        else {
+          const formattedText = formatMessage(m.text);
+          const timeEl = `<div class="cw-time">${m.time}</div>`;
+          bubble.innerHTML = formattedText + timeEl;
+        }
         group.appendChild(av); group.appendChild(bubble); row.appendChild(group); body.appendChild(row);
       });
       body.scrollTop = body.scrollHeight;
@@ -230,6 +377,41 @@
       recognition.onend = () => { micBtn.classList.remove("recording"); };
     } else { micBtn.style.display = "none"; }
 
+    
+    // ---- Save Bot Message ----
+    async function saveBotMessage(message, chatId) {
+      try {
+        const saveUrl = opts.webhookUrl.replace('/api/stream', '/api/chats/save-message');
+        const payload = {
+          message: message,
+          chatId: chatId,
+          type: 'widget',
+          organization_id: '68bff8e6a443dd2db8aae466'
+        };
+
+        const response = await fetch(saveUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}` // Add auth token if available
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Message saved successfully:', result);
+          return result; // Return the result for promise chain
+        } else {
+          console.error('Failed to save message:', response.status, response.statusText);
+          return null;
+        }
+      } catch (error) {
+        console.error('Error saving bot message:', error);
+        return null;
+      }
+    }
+
     // ---- Send ----
     let sending = false;
     async function send() {
@@ -251,29 +433,114 @@
           }));
         }
 
-        const payload = { [opts.messageKey]: text, history };
-        const h = opts.headers || { "Content-Type": "application/json" };
-        const ct = (h["Content-Type"] || h["content-type"] || "application/json").toLowerCase();
-        let body;
-        if (ct.includes("application/x-www-form-urlencoded")) {
-          const p = new URLSearchParams();
-          p.set(opts.messageKey, text);
-          p.set("history", JSON.stringify(history));
-          body = p.toString();
-        } else {
-          body = JSON.stringify(payload);
-        }
-        const res = await fetch(opts.webhookUrl, { method: "POST", headers: h, body });
-        const rct = (res.headers.get("content-type") || "").toLowerCase();
-        let data; try { data = rct.includes("application/json") ? await res.json() : await res.text(); } catch { data = await res.text(); }
+        // Prepare input for streaming API
+        const input = { query: text, type: 'widget', organization_id: '68bff8e6a443dd2db8aae466', organization_name: 'lums' };
+        // const input = { query: text, type: 'widget', organization_id: '68bfed9b64fcb4fc90386409', organization_name: 'lums' };
+        
+        const inputData = encodeURIComponent(JSON.stringify(input));
+        const streamUrl = `${opts.webhookUrl}?input=${inputData}`;
+
+        // Remove typing indicator and add placeholder message
         messages = messages.filter(m => m.id !== tid);
-        const reply = extractText(data, opts.parse);
-        messages.push({ id: Date.now() + 1, from: "bot", text: reply || "(empty response)", time: time() });
-      } catch {
+        const placeholderMessage = { id: Date.now() + 1, from: "bot", text: "", time: time() };
+        messages.push(placeholderMessage);
+        render();
+
+        // Start streaming
+        const eventSource = new EventSource(streamUrl);
+        let botContent = '';
+        let isMarkdownBlock = false;
+        let currentChatId = null; // Will be set when saving message
+
+        // Throttle rendering for better performance
+        let renderTimeout = null;
+        const throttledRender = () => {
+          if (renderTimeout) clearTimeout(renderTimeout);
+          renderTimeout = setTimeout(() => {
+            render();
+            renderTimeout = null;
+          }, 50); // Render at most every 50ms
+        };
+
+        eventSource.addEventListener('chunk', (event) => {
+          let chunk = event.data;
+
+          // Check if this chunk starts a markdown block
+          if (chunk.includes('```html')) {
+            isMarkdownBlock = true;
+            chunk = chunk.replace(/```html\s*/, '');
+          }
+          // Check if chunk starts with standalone 'html'
+          else if (chunk.trim().startsWith('html')) {
+            chunk = chunk.replace(/^\s*html\s*/, '');
+          }
+
+          // Check if this chunk ends a markdown block
+          if (chunk.includes('```')) {
+            isMarkdownBlock = false;
+            chunk = chunk.replace(/```/, '');
+          }
+
+          // If we're not in a markdown block but the chunk starts with html tags,
+          // it might be part of a split markdown block
+          if (!isMarkdownBlock && botContent === '' && chunk.trim().startsWith('<')) {
+            isMarkdownBlock = true;
+          }
+
+          botContent += chunk;
+          placeholderMessage.text = botContent;
+          throttledRender(); // Use throttled render instead of direct render
+        });
+
+        eventSource.addEventListener('end', () => {
+          eventSource.close();
+          
+          // Clear any pending render timeout
+          if (renderTimeout) {
+            clearTimeout(renderTimeout);
+            renderTimeout = null;
+          }
+
+          // Final cleanup of any markdown syntax
+          let cleanContent = botContent;
+          cleanContent = cleanContent.replace(/^```html\s*/g, '');
+          cleanContent = cleanContent.replace(/```$/g, '');
+          // Remove standalone 'html' at the beginning
+          cleanContent = cleanContent.replace(/^\s*html\s*/, '');
+
+          placeholderMessage.text = cleanContent || "(empty response)";
+
+          // Save the bot message to the server
+          saveBotMessage(cleanContent, currentChatId).then((result) => {
+            if (result && result.chatId && !currentChatId) {
+              currentChatId = result.chatId;
+            }
+          });
+
+          if (opts.sendHistory) save(opts.storageKey, messages);
+          render(); // Final render immediately
+          sending = false;
+        });
+
+        eventSource.onerror = (err) => {
+          console.error('Streaming error:', err);
+          eventSource.close();
+          
+          // Clear any pending render timeout
+          if (renderTimeout) {
+            clearTimeout(renderTimeout);
+            renderTimeout = null;
+          }
+          
+          placeholderMessage.text = "Sorry, I couldn't reach the server.";
+          if (opts.sendHistory) save(opts.storageKey, messages);
+          render();
+          sending = false;
+        };
+      } catch (error) {
+        console.error('Error setting up stream:', error);
         messages = messages.filter(m => m.id !== tid);
-        messages.push({ id: Date.now() + 2, from: "bot", text: "Sorry, I couldn't reach the server.", time: time() });
-      }
-      finally {
+        messages.push({ id: Date.now() + 2, from: "bot", text: "Sorry, I couldn't set up the connection.", time: time() });
         if (opts.sendHistory) save(opts.storageKey, messages);
         render();
         sending = false;

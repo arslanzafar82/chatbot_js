@@ -10,6 +10,7 @@
     }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
 </head>
 
 <body>
@@ -26,17 +27,24 @@
     // Parse history flag → boolean
     const sendHistory = (params.get("history") || "true").toLowerCase() === "true";
     console.log(sendHistory);
-    if (webhookUrl) {
-      ChatWidget.init({
-        webhookUrl,
-        title,
-        greet,
-        position,
-        sendHistory
-      });
-    } else {
-      document.body.innerHTML =
-        "<p style='font-family:sans-serif;color:red;padding:20px;'>Missing webhook URL</p>";
+    // Default to streaming API if no webhook provided
+    // const defaultWebhook = "http://localhost:8000/api/stream";
+    const defaultWebhook = "https://metaapi.tmcltd.com:5000/api/stream";
+
+    const finalWebhookUrl = webhookUrl || defaultWebhook;
+    
+    ChatWidget.init({
+      webhookUrl: finalWebhookUrl,
+      title,
+      greet,
+      position,
+      sendHistory
+    });
+    
+    // Add info about streaming functionality
+    if (!webhookUrl) {
+      console.log("Using default streaming API:", defaultWebhook);
+      console.log("Widget configured for real-time streaming responses");
     }
   </script>
 </body>
